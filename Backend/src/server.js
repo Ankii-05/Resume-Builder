@@ -19,8 +19,8 @@ app.use(cors())
 
 // middleware
 app.use(express.json())
-app.use('/auth', userRouter)
-app.use('/resume', resumeRouter)
+app.use('/', userRouter)
+app.use('/', resumeRouter)
 
 app.use(
     'uploads',

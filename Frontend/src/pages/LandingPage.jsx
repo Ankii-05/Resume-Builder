@@ -1,8 +1,12 @@
-import React, { useState } from 'react'
+import React, { useContext, useState } from 'react'
 import { LayoutTemplate, X, Menu } from 'lucide-react';
 import { landingPageStyles } from '../assets/dummystyle.js'
+import { UserContext } from '../context/UserContext.js'
+import {useNavigate} from 'react-router-dom'
 const LandingPage = () => {
 
+  const {user} = useContext(UserContext)
+  const navigate = useNavigate()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
   return (
@@ -28,7 +32,9 @@ const LandingPage = () => {
             }
           </button>
           {/* DESKTOP NAVIGATION */}
-          <div className='hidden md:flex items-center'></div>
+          <div className='hidden md:flex items-center'>
+            {user} 
+          </div>
         </div>
       </header>
 
