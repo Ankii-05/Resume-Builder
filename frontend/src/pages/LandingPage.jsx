@@ -1,5 +1,5 @@
 import { useState, useContext, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import {
   ArrowRight,
   LayoutTemplate,
@@ -60,7 +60,13 @@ const LandingPage = () => {
           </button>
 
           {/* Desktop navigation */}
-          <div className="hidden md:flex items-center">
+          <div className="hidden md:flex items-center gap-6">
+            <Link
+              to="/ats-checker"
+              className="text-sm font-bold text-violet-700 hover:text-fuchsia-600 transition-colors"
+            >
+              ATS Checker
+            </Link>
             {user ? (
               <ProfileInfoCard />
             ) : (
@@ -83,6 +89,13 @@ const LandingPage = () => {
         {mobileMenuOpen && (
           <div className={landingPageStyles.mobileMenu}>
             <div className={landingPageStyles.mobileMenuContainer}>
+              <Link
+                to="/ats-checker"
+                className="w-full text-center px-6 py-3 border-2 border-violet-200 text-violet-700 font-bold rounded-xl hover:bg-violet-50 transition-all"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                ATS Checker
+              </Link>
               {user ? (
                 <div className={landingPageStyles.mobileUserInfo}>
                   <div className={landingPageStyles.mobileUserWelcome}>

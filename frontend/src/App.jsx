@@ -5,6 +5,7 @@ import LandingPage from "./pages/LandingPage"
 import Login from "./components/Login"
 import SignUp from "./components/SignUp"
 import Dashboard from "./pages/Dashboard"
+import ATSChecker from "./pages/ATSChecker"
 import EditResume from "./components/EditResume"
 import UserProvider from './context/userContext';
 const App = () => {
@@ -17,6 +18,7 @@ const App = () => {
           <Route path="/login" element={<Login />} />
           <Route path="/signUp" element={<SignUp />} />
           <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/ats-checker" element={<ATSChecker />} />
           <Route path="/resume/:resumeId" element={<EditResume />} />
         </Routes>
       </div>

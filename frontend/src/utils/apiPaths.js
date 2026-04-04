@@ -1,4 +1,6 @@
-export const BASE_URL = "https://resume-builder-backend-5ye0.onrender.com/";
+export const BASE_URL =
+  import.meta.env.VITE_API_URL ||
+  "https://resume-builder-backend-5ye0.onrender.com/";
 
 //utils/apiPath.js
 export const API_PATHS = {
@@ -15,6 +17,9 @@ export const API_PATHS = {
         UPDATE: (id) => `/api/resume/${id}`,
         DELETE: (id) => `/api/resume/${id}`,
         UPLOAD_IMAGES: (id) => `/api/resume/${id}/upload-images`,
+    },
+    ATS: {
+        CHECK: "/api/ats/check",
     },
     image: {
         UPLOAD_IMAGE: "api/auth/upload-image",

@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import axiosInstance from '../utils/axiosInstance';
 import { API_PATHS } from '../utils/apiPaths';
 import DashboardLayout from '../components/DashboardLayout';
-import { LuCirclePlus, LuFilePlus, LuTrash2 } from 'react-icons/lu';
+import { LuCirclePlus, LuClipboardCheck, LuFilePlus, LuTrash2 } from 'react-icons/lu';
 import moment from 'moment';
 import { ResumeSummaryCard } from '../components/Cards';
 import CreateResumeForm from '../components/CreateResumeForm';
@@ -167,7 +167,17 @@ const Dashboard = () => {
             </p>
           </div>
 
-          <div className="flex gap-4">
+          <div className="flex flex-wrap gap-3 sm:gap-4">
+            <Link
+              to="/ats-checker"
+              className={`${styles.createButton} no-underline text-center inline-flex`}
+            >
+              <div className={styles.createButtonOverlay}></div>
+              <span className={styles.createButtonContent}>
+                ATS Checker
+                <LuClipboardCheck size={18} className="group-hover:translate-x-1 transition-transform" />
+              </span>
+            </Link>
             <button
               className={styles.createButton}
               onClick={() => setOpenCreateModal(true)}
