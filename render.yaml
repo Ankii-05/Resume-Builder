@@ -1,0 +1,51 @@
+# Render Blueprint — https://render.com/docs/infrastructure-as-code
+# 1) Push this repo to GitHub, then Render Dashboard → New → Blueprint → connect repo.
+# 2) Deploy BACKEND first. Copy its public URL (e.g. https://resume-builder-backend-xxxx.onrender.com).
+# 3) Set frontend build env VITE_API_URL to that URL with trailing slash, then deploy frontend.
+# 4) Update Google OAuth redirect URI to: https://<BACKEND_URL>/google/callback
+# 5) Set CLIENT_URL on backend to your frontend URL (e.g. https://resume-builder-frontend-xxxx.onrender.com).
+
+services:
+  - type: web
+    name: resume-builder-backend
+    runtime: node
+    plan: free
+    region: oregon
+    rootDir: backend
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: MONGODB_URI
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: SESSION_SECRET
+        sync: false
+      - key: CLIENT_URL
+        sync: false
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
+      - key: GOOGLE_REDIRECT_URI
+        sync: false
+      - key: GOOGLE_VERIFY_SSL
+        value: "true"
+
+  - type: web
+    name: resume-builder-frontend
+    runtime: static
+    rootDir: frontend
+    buildCommand: npm install && npm run build
+    # Path is relative to repo root (see Render blueprint spec)
+    staticPublishPath: ./frontend/dist
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    envVars:
+      - key: VITE_API_URL
+        sync: false

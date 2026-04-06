@@ -1,0 +1,44 @@
+RENDER DEPLOY — Resume Builder (MERN)
+=====================================
+
+GitHub repo: https://github.com/Ankii-05/Resume-Builder.git
+Local folder should match after: git pull origin main
+
+IMPORTANT: Main live URL Render TAB banate waqt milta hai (https://<name>.onrender.com).
+Is file mein koi "magic URL" nahi hai — deploy ke baad Dashboard se copy karein.
+
+A) Render par pehli baar (Blueprint)
+------------------------------------
+1. https://dashboard.render.com → New → Blueprint
+2. Connect GitHub → repo Ankii-05/Resume-Builder select karein
+3. render.yaml load ho jayega — secret env vars (MONGODB_URI, JWT_SECRET, ...) manually set karenge
+4. Pehle sirf BACKEND service deploy karein ya dono ek saath; backend URL milne ke baad:
+
+B) Environment variables (order matters)
+----------------------------------------
+BACKEND (resume-builder-backend):
+  CLIENT_URL = frontend ki public URL, example:
+    https://resume-builder-frontend-xxxx.onrender.com
+  GOOGLE_REDIRECT_URI = https://<BACKEND_HOST>/google/callback
+    example: https://resume-builder-backend-xxxx.onrender.com/google/callback
+  Google Cloud Console → OAuth client → Authorized redirect URIs mein yehi URL add karein
+  Authorized JavaScript origins mein frontend URL add karein
+
+FRONTEND static site build ke time:
+  VITE_API_URL = https://<BACKEND_HOST>/
+    (trailing slash rakhein — apiPaths.js ke saath match)
+
+C) Local dev ab "npm run dev" backend folder mein
+---------------------------------------------------
+  cd backend && npm run dev
+  (pehle "npm start" nodemon tha; ab production Render "npm start" = node server.js)
+
+D) Uploads folder on free tier
+------------------------------
+  /uploads disk Render par ephemeral hai — restart par files gayab ho sakti hain.
+  Production ke liye baad mein Render Disk ya S3/Cloudinary use karein.
+
+E) URLs kahan dikhenge
+-----------------------
+  Render Dashboard → service → top par "https://....onrender.com"
+  Wahi URL share karein — main aapke account ke bina deploy nahi kar sakta.
