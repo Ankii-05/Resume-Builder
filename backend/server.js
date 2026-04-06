@@ -113,14 +113,14 @@ app.get("/google", googleInitHandler);
 app.use("/api/resume", resumeRoutes);
 app.use("/api/ats", atsRoutes);
 
+const uploadsAllowOrigin =
+  process.env.UPLOADS_CORS_ORIGIN?.replace(/\/$/, "") || clientOrigin;
+
 app.use(
   "/uploads",
   express.static(path.join(__dirname, "uploads"), {
     setHeaders: (res, _path) => {
-      res.set(
-        "Access-Control-Allow-Origin",
-        "https://resume-builder-frontend-l6yg.onrender.com"
-      );
+      res.set("Access-Control-Allow-Origin", uploadsAllowOrigin);
     },
   })
 );

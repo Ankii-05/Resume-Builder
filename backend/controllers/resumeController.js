@@ -2,15 +2,26 @@ import fs from 'fs';
 import path from 'path';
 import Resume from '../models/Resume.js';
 
+function jsonError(res, status, message, err) {
+    const body = { message };
+    if (process.env.NODE_ENV !== 'production' && err?.message) {
+        body.error = err.message;
+    }
+    return res.status(status).json(body);
+}
+
 export const createResume = async (req, res) => {
     try {
-        const { title } = req.body;
+        const title =
+            typeof req.body.title === 'string' ? req.body.title.trim() : '';
+        if (!title) {
+            return res.status(400).json({ message: 'Title is required' });
+        }
 
-        // Default template
+        // Default template (field names must match models/Resume.js)
         const defaultResumeData = {
             profileInfo: {
-                profileImg: null,
-                previewUrl: '',
+                profilePreviewUrl: '',
                 fullName: '',
                 designation: '',
                 summary: '',
@@ -64,7 +75,7 @@ export const createResume = async (req, res) => {
             languages: [
                 {
                     name: '',
-                    progress: '',
+                    progress: 0,
                 },
             ],
             interests: [''],
@@ -78,7 +89,7 @@ export const createResume = async (req, res) => {
 
         res.status(201).json(newResume);
     } catch (error) {
-        res.status(500).json({ message: 'Failed to create resume', error: error.message });
+        jsonError(res, 500, 'Failed to create resume', error);
     }
 };
 
@@ -89,7 +100,7 @@ export const getUserResumes = async (req, res) => {
         });
         res.json(resumes);
     } catch (error) {
-        res.status(500).json({ message: 'Failed to get resumes', error: error.message });
+        jsonError(res, 500, 'Failed to get resumes', error);
     }
 };
 
@@ -102,7 +113,7 @@ export const getResumeById = async (req, res) => {
         }
         res.json(resume);
     } catch (error) {
-        res.status(500).json({ message: 'Failed to get resume', error: error.message });
+        jsonError(res, 500, 'Failed to get resume', error);
     }
 };
 
@@ -116,14 +127,14 @@ export const updateResume = async (req, res) => {
             return res.status(404).json({ message: 'Resume not found or unauthorized' });
         }
 
-        // Merge updates from req.body into existing resume
-        Object.assign(resume, req.body);
+        const { userId: _uid, _id: _rid, ...safeBody } = req.body || {};
+        Object.assign(resume, safeBody);
 
         // Save updated resume
         const savedResume = await resume.save();
         res.json(savedResume);
     } catch (error) {
-        res.status(500).json({ message: 'Failed to update resume', error: error.message });
+        jsonError(res, 500, 'Failed to update resume', error);
     }
 };
 
@@ -172,6 +183,6 @@ export const deleteResume = async (req, res) => {
 
         res.json({ message: 'Resume deleted successfully' });
     } catch (error) {
-        res.status(500).json({ message: 'Failed to delete resume', error: error.message });
+        jsonError(res, 500, 'Failed to delete resume', error);
     }
 };

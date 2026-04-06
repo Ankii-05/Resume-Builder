@@ -43,7 +43,11 @@ export const registerUser = async (req, res) => {
       token: generateToken(user._id),
     });
   } catch (error) {
-    res.status(500).json({ message: "Server error", error: error.message });
+    const body = { message: "Server error" };
+    if (process.env.NODE_ENV !== "production" && error?.message) {
+      body.error = error.message;
+    }
+    res.status(500).json(body);
   }
 };
 
@@ -85,7 +89,11 @@ export const loginUser = async (req, res) => {
       token: generateToken(user._id),
     });
   } catch (error) {
-    res.status(500).json({ message: "Server error", error: error.message });
+    const body = { message: "Server error" };
+    if (process.env.NODE_ENV !== "production" && error?.message) {
+      body.error = error.message;
+    }
+    res.status(500).json(body);
   }
 };
 
@@ -97,7 +105,11 @@ export const getUserProfile = async (req, res) => {
     }
     res.json(user);
   } catch (error) {
-    res.status(500).json({ message: "Server error", error: error.message });
+    const body = { message: "Server error" };
+    if (process.env.NODE_ENV !== "production" && error?.message) {
+      body.error = error.message;
+    }
+    res.status(500).json(body);
   }
 };
 
