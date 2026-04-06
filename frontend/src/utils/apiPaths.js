@@ -9,6 +9,9 @@ export const API_PATHS = {
         REGISTER: "/api/auth/register",
         LOGIN: "/api/auth/login",
         GET_PROFILE: "/api/auth/profile",
+        VERIFY: "/api/auth/verify",
+        LOGOUT: "/api/auth/logout",
+        GOOGLE: "/api/auth/google",
     },
     RESUME: {
         CREATE: "/api/resume",

@@ -1,14 +1,33 @@
-// models/User.js (ES6 module version)
-
 import mongoose from "mongoose";
 
 const UserSchema = new mongoose.Schema(
-    {
-        name: { type: String, required: true },
-        email: { type: String, required: true, unique: true },
-        password: { type: String, required: true },
+  {
+    googleId: { type: String, sparse: true, unique: true },
+    name: { type: String, required: true, trim: true },
+    email: {
+      type: String,
+      required: true,
+      unique: true,
+      lowercase: true,
+      trim: true,
     },
-    { timestamps: true }
+    password: {
+      type: String,
+      required: function () {
+        return this.provider !== "google";
+      },
+      select: false,
+    },
+    avatar: { type: String, default: null },
+    provider: {
+      type: String,
+      enum: ["local", "google"],
+      default: "local",
+    },
+    isEmailVerified: { type: Boolean, default: false },
+    lastLogin: { type: Date },
+  },
+  { timestamps: true }
 );
 
 export default mongoose.model("User", UserSchema);

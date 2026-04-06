@@ -1,5 +1,6 @@
 import { useState, useContext, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import toast from "react-hot-toast";
 import {
   ArrowRight,
   LayoutTemplate,
@@ -18,6 +19,7 @@ import { landingPageStyles } from "../assets/dummystyle";
 const LandingPage = () => {
   const { user } = useContext(UserContext);
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [openAuthModal, setOpenAuthModal] = useState(false);
   const [currentPage, setCurrentPage] = useState("login");
@@ -33,6 +35,19 @@ const LandingPage = () => {
 
   useEffect(() => {
     window.scrollTo(0, 0);
+    if (location.state?.needAuth) {
+      setOpenAuthModal(true);
+    }
+  }, [location.state]);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const err = params.get("authError");
+    if (!err) return;
+    toast.error("Sign-in required or failed. Please try again.");
+    params.delete("authError");
+    const next = params.toString();
+    window.history.replaceState({}, "", next ? `/?${next}` : "/");
   }, []);
 
   return (

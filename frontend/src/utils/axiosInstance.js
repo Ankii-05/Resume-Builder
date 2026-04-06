@@ -4,6 +4,7 @@ import { BASE_URL } from "./apiPaths";
 const axiosInstance = axios.create({
     baseURL: BASE_URL,
     timeout: 10000,
+    withCredentials: true,
     headers: {
         "Content-Type": "application/json",
         Accept: "application/json",
@@ -33,8 +34,13 @@ axiosInstance.interceptors.response.use(
         //Handle common errors globally
         if (error.response) {
             if (error.response.status === 401) {
-                // Redirect to login page
-                window.location.href = "/";
+                const reqUrl = error.config?.url || "";
+                const isLoginOrRegister =
+                    reqUrl.includes("/api/auth/login") ||
+                    reqUrl.includes("/api/auth/register");
+                if (!isLoginOrRegister && !reqUrl.includes("/logout")) {
+                    window.location.href = "/";
+                }
             } else if (error.response.status === 500) {
                 console.error("Server error. Please try again later.");
             }

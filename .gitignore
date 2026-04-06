@@ -1,0 +1,11 @@
+# Secrets — never commit
+.env
+.env.local
+.env.*.local
+backend/.env
+
+# Dependencies & build
+node_modules/
+dist/
+build/
+*.log

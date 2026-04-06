@@ -1,11 +1,12 @@
 import React, { useState, useContext } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Input } from './Inputs';
 import { validateEmail } from '../utils/helper';
 import { API_PATHS } from '../utils/apiPaths';
 import axiosInstance from '../utils/axiosInstance';
 import { UserContext } from '../context/userContext';
 import { authStyles as styles } from '../assets/dummystyle';
+import GoogleSignInButton from './GoogleSignInButton';
 
 const SignUp = ({ setCurrentPage }) => {
   const [fullName, setFullName] = useState('');
@@ -54,6 +55,17 @@ const SignUp = ({ setCurrentPage }) => {
         <h3 className={styles.signupTitle}>Create Account</h3>
         <p className={styles.signupSubtitle}>Join thousands of professionals today</p>
       </div>
+      <div className="mb-6">
+        <GoogleSignInButton text="Sign up with Google" fullWidth />
+        <p className="text-center text-xs text-slate-500 font-medium mt-3">
+          Quick sign-up with Google
+        </p>
+      </div>
+      <div className="flex items-center gap-3 mb-6">
+        <div className="flex-1 h-px bg-rose-100" />
+        <span className="text-xs font-bold text-slate-400">or email</span>
+        <div className="flex-1 h-px bg-rose-100" />
+      </div>
       <form onSubmit={handleSignUp} className={styles.signupForm}>
         <Input
           value={fullName}
@@ -82,9 +94,15 @@ const SignUp = ({ setCurrentPage }) => {
         </button>
         <p className={styles.switchText}>
           Already have an account?{' '}
-          <button type="button" className={styles.signupSwitchButton} onClick={() => setCurrentPage('login')}>
-            Sign In
-          </button>
+          {typeof setCurrentPage === 'function' ? (
+            <button type="button" className={styles.signupSwitchButton} onClick={() => setCurrentPage('login')}>
+              Sign In
+            </button>
+          ) : (
+            <Link to="/login" className={styles.signupSwitchButton}>
+              Sign In
+            </Link>
+          )}
         </p>
       </form>
     </div>
