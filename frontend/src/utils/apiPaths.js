@@ -1,5 +1,5 @@
 /** Production API (Render). Override with VITE_API_URL in .env / Vercel env for previews. */
-const PRODUCTION_API = "https://resumexpert-04tt.onrender.com/";
+const PRODUCTION_API = "https://resume-builder-backend-s3g5.onrender.com";
 
 export const BASE_URL =
   import.meta.env.VITE_API_URL ||
