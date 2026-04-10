@@ -70,24 +70,22 @@ const clientOrigin = productionCorsOrigins()[0] || "http://localhost:5173";
 app.use(
   cors({
     origin(origin, callback) {
+      if (!isProd) {
+        return callback(null, true);
+      }
       const allowed = productionCorsOrigins();
-
-      // allow requests like Postman / server-to-server (no origin)
-      if (!origin) return callback(null, true);
-
-      // allow all in development
-      if (!isProd) return callback(null, true);
-
-      // allow only listed origins in production
+      if (!origin) {
+        return callback(null, true);
+      }
       if (allowed.includes(origin)) {
         return callback(null, true);
       }
-
-      // block others
-      console.log("❌ Blocked by CORS:", origin);
-      return callback(new Error("Not allowed by CORS"));
+      return callback(null, false);
     },
     credentials: true,
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+    exposedHeaders: ["X-New-Token"],
   })
 );
 
