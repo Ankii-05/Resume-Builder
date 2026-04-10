@@ -79,6 +79,8 @@ const ResumeSchema = new mongoose.Schema(
             },
         ],
         interests: [String],
+        downloadCount: { type: Number, default: 0 },
+        isCompleted: { type: Boolean, default: false },
     },
     {
         timestamps: { createdAt: "createdAt", updatedAt: "updatedAt" },

@@ -11,6 +11,7 @@ const UserProvider = ({ children }) => {
   const clearUser = useCallback(() => {
     setUser(null);
     localStorage.removeItem("token");
+    localStorage.removeItem("role");
   }, []);
 
   useEffect(() => {

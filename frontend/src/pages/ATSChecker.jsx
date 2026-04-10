@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import UploadZone from "../components/ats/UploadZone";
@@ -10,22 +10,66 @@ import SuggestionList from "../components/ats/SuggestionList";
 import AnalysisLoader from "../components/ats/AnalysisLoader";
 import { dashboardStyles } from "../assets/dummystyle";
 import { BASE_URL, API_PATHS } from "../utils/apiPaths";
+import { BUILTIN_ATS_DOMAINS } from "../utils/builtinAtsDomains";
 
 function apiUrl(path) {
   const base = BASE_URL.replace(/\/?$/, "");
   return `${base}${path}`;
 }
 
+function mergeDomains(apiRows) {
+  const bySlug = new Map();
+  for (const d of BUILTIN_ATS_DOMAINS) {
+    bySlug.set(d.slug, { slug: d.slug, label: d.label });
+  }
+  for (const row of apiRows || []) {
+    if (row?.slug && row?.name) {
+      bySlug.set(row.slug, { slug: row.slug, label: row.name });
+    }
+  }
+  return Array.from(bySlug.values()).sort((a, b) =>
+    a.label.localeCompare(b.label)
+  );
+}
+
 export default function ATSChecker() {
   const [file, setFile] = useState(null);
   const [domain, setDomain] = useState("software_engineer");
-  const [customLabel, setCustomLabel] = useState("");
+  const [domains, setDomains] = useState([]);
   const [dragOver, setDragOver] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [uploadHint, setUploadHint] = useState(null);
   const [results, setResults] = useState(null);
   const [resultsKey, setResultsKey] = useState(0);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch(apiUrl(API_PATHS.ATS.DOMAINS), {
+          credentials: "include",
+        });
+        const body = await res.json().catch(() => ({}));
+        if (cancelled) return;
+        const merged = mergeDomains(body.domains);
+        setDomains(merged);
+      } catch {
+        if (!cancelled) setDomains(mergeDomains([]));
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (domains.length && !domains.some((d) => d.slug === domain)) {
+      setDomain(domains[0].slug);
+    }
+  }, [domains, domain]);
+
+  const domainList = useMemo(() => domains, [domains]);
 
   const analyzeResume = async () => {
     setUploadHint(null);
@@ -34,8 +78,8 @@ export default function ATSChecker() {
       setUploadHint("Please choose a resume file first.");
       return;
     }
-    if (domain === "custom" && customLabel.trim().length < 2) {
-      setUploadHint("Enter your target role for Custom domain.");
+    if (!domain) {
+      setUploadHint("Please select a job domain.");
       return;
     }
 
@@ -45,14 +89,18 @@ export default function ATSChecker() {
     const formData = new FormData();
     formData.append("file", file);
     formData.append("domain", domain);
-    if (domain === "custom") {
-      formData.append("customDomain", customLabel.trim());
-    }
 
     try {
+      const headers = {};
+      const token = localStorage.getItem("token");
+      if (token) {
+        headers.Authorization = `Bearer ${token}`;
+      }
       const response = await fetch(apiUrl(API_PATHS.ATS.CHECK), {
         method: "POST",
         body: formData,
+        headers,
+        credentials: "include",
       });
 
       const payload = await response.json().catch(() => ({}));
@@ -115,8 +163,7 @@ export default function ATSChecker() {
             <DomainSelector
               domain={domain}
               onDomainChange={setDomain}
-              customLabel={customLabel}
-              onCustomLabelChange={setCustomLabel}
+              domains={domainList}
             />
           </div>
           {error && (

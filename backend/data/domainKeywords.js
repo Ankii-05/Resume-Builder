@@ -190,36 +190,9 @@ export const DOMAIN_KEYWORDS = {
       "scaled",
     ],
   },
-  custom: {
-    technical: [
-      "Project Management",
-      "Microsoft Office",
-      "Excel",
-      "Communication",
-      "Analysis",
-      "Reporting",
-      "Stakeholder",
-      "Strategy",
-      "Operations",
-      "Documentation",
-    ],
-    soft: [
-      "leadership",
-      "communication",
-      "collaboration",
-      "problem-solving",
-      "organization",
-    ],
-    action_verbs: [
-      "managed",
-      "led",
-      "developed",
-      "improved",
-      "delivered",
-      "coordinated",
-      "supported",
-    ],
-  },
 };
 
-export const VALID_DOMAIN_KEYS = Object.keys(DOMAIN_KEYWORDS);
+/** Built-in slugs (admin DB profiles may add more). */
+export const STATIC_DOMAIN_SLUGS = Object.keys(DOMAIN_KEYWORDS);
+
+export const VALID_DOMAIN_KEYS = STATIC_DOMAIN_SLUGS;

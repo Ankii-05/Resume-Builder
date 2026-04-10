@@ -46,6 +46,18 @@ export default function AuthCallback() {
     (async () => {
       try {
         localStorage.setItem("token", token);
+        try {
+          const part = token.split(".")[1];
+          if (part) {
+            let b64 = part.replace(/-/g, "+").replace(/_/g, "/");
+            const pad = b64.length % 4;
+            if (pad) b64 += "=".repeat(4 - pad);
+            const payload = JSON.parse(atob(b64));
+            if (payload.role) localStorage.setItem("role", payload.role);
+          }
+        } catch {
+          /* ignore */
+        }
         const { data } = await axiosInstance.get(API_PATHS.AUTH.GET_PROFILE);
         if (cancelled) return;
         updateUser({ ...data, token });

@@ -30,29 +30,22 @@ const BULLET_RE = /(?:^|\n)\s*[•\-\*▪◦]\s+/m;
 
 const PRIORITY_RANK = { HIGH: 0, MEDIUM: 1, LOW: 2 };
 
-function tokenizeCustomLabel(label) {
-  if (!label || typeof label !== "string") return [];
-  return [
+const FALLBACK_SOFT_ACTION = DOMAIN_KEYWORDS.software_engineer;
+
+/** Admin-defined keyword list → scoring pack (soft skills + verbs from generic SE pack). */
+export function packFromAdminKeywords(keywords) {
+  const uniq = [
     ...new Set(
-      label
-        .split(/[^a-zA-Z0-9+#./\s-]+/)
-        .map((w) => w.trim())
-        .filter((w) => w.length > 2 && w.length < 48)
+      (keywords || [])
+        .map((k) => String(k).trim())
+        .filter(Boolean)
     ),
   ];
-}
-
-function getDomainPack(domainKey, customLabel) {
-  const base =
-    DOMAIN_KEYWORDS[domainKey] ||
-    DOMAIN_KEYWORDS.custom;
-  const extra = tokenizeCustomLabel(customLabel);
-  if (domainKey !== "custom" || extra.length === 0) {
-    return { ...base, extraKeywords: [] };
-  }
   return {
-    ...base,
-    extraKeywords: extra,
+    technical: uniq,
+    soft: [...FALLBACK_SOFT_ACTION.soft],
+    action_verbs: [...FALLBACK_SOFT_ACTION.action_verbs],
+    extraKeywords: [],
   };
 }
 
@@ -107,7 +100,7 @@ function countWords(text) {
   return text.split(/\s+/).filter(Boolean).length;
 }
 
-function generateSuggestions(scores, matched, missing, text, domainKey, domainLabel) {
+function generateSuggestions(scores, matched, missing, text, _domainSlug, domainLabel) {
   const suggestions = [];
   const lower = text.toLowerCase();
   const hasSummary = SECTION_PATTERNS.summary.test(text);
@@ -206,18 +199,17 @@ function overallLabel(score) {
 
 /**
  * @param {string} resumeText
- * @param {string} domainKey
- * @param {string} [customLabel]
+ * @param {string} domainSlug — persisted slug (static or admin profile)
+ * @param {{ technical: string[], soft: string[], action_verbs: string[], extraKeywords?: string[] }} pack
+ * @param {string} domainLabel — human-readable name for suggestions copy
  */
-export function scoreResume(resumeText, domainKey, customLabel = "") {
+export function scoreResume(resumeText, domainSlug, pack, domainLabel) {
   const text = resumeText || "";
   const lower = text.toLowerCase();
-  const domainLabel =
-    domainKey === "custom" && customLabel
-      ? customLabel
-      : domainKey.replace(/_/g, " ");
-
-  const pack = getDomainPack(domainKey, customLabel);
+  const label =
+    domainLabel && String(domainLabel).trim()
+      ? String(domainLabel).trim()
+      : String(domainSlug || "role").replace(/_/g, " ");
   const allKeywords = collectAllKeywords(pack);
 
   const matched = [];
@@ -297,8 +289,8 @@ export function scoreResume(resumeText, domainKey, customLabel = "") {
     matched,
     missing,
     text,
-    domainKey,
-    domainLabel
+    domainSlug,
+    label
   );
 
   const missingCap = missing.slice(0, 15);
@@ -306,7 +298,7 @@ export function scoreResume(resumeText, domainKey, customLabel = "") {
   return {
     overall: total,
     label: overallLabel(total),
-    domain: domainKey,
+    domain: domainSlug,
     breakdown,
     matchedKeywords: matched,
     missingKeywords: missingCap,

@@ -26,6 +26,11 @@ const UserSchema = new mongoose.Schema(
     },
     isEmailVerified: { type: Boolean, default: false },
     lastLogin: { type: Date },
+    role: {
+      type: String,
+      enum: ["user", "admin"],
+      default: "user",
+    },
   },
   { timestamps: true }
 );

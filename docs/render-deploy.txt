@@ -4,6 +4,24 @@ RENDER DEPLOY — Resume Builder (MERN)
 GitHub repo: https://github.com/Ankii-05/Resume-Builder.git
 Local folder should match after: git pull origin main
 
+INTEGRATED HOSTS (example — yours may differ):
+  Backend:  https://resumexpert-04tt.onrender.com/
+  Frontend: https://resume-builder-topaz-zeta.vercel.app/
+
+Render (backend) env — set these in Dashboard:
+  CLIENT_URL=https://resume-builder-topaz-zeta.vercel.app
+  GOOGLE_REDIRECT_URI=https://resumexpert-04tt.onrender.com/google/callback
+  (plus MONGODB_URI, JWT_SECRET, SESSION_SECRET, GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET)
+
+Vercel (frontend):
+  Root Directory = frontend (if repo is monorepo)
+  VITE_API_URL=https://resumexpert-04tt.onrender.com/   (optional if using committed .env.production)
+  Redeploy after env changes.
+
+Google Cloud OAuth:
+  Authorized JavaScript origins: https://resume-builder-topaz-zeta.vercel.app
+  Authorized redirect URIs: https://resumexpert-04tt.onrender.com/google/callback
+
 IMPORTANT: Main live URL Render TAB banate waqt milta hai (https://<name>.onrender.com).
 Is file mein koi "magic URL" nahi hai — deploy ke baad Dashboard se copy karein.
 

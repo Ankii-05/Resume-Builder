@@ -649,7 +649,9 @@ const EditResume = () => {
       toast.success("PDF downloaded successfully!", { id: toastId });
       setDownloadSuccess(true);
       setTimeout(() => setDownloadSuccess(false), 3000);
-  
+
+      axiosInstance.patch(API_PATHS.RESUME_DOWNLOAD(resumeId)).catch(() => {});
+
     } catch (err) {
       console.error("PDF error:", err);
       toast.error(`Failed to generate PDF: ${err.message}`, { id: toastId });

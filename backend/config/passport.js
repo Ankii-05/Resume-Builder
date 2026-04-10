@@ -64,7 +64,7 @@ export function configurePassport() {
             user.avatar = profile.photos?.[0]?.value || user.avatar;
             user.name = profile.displayName || user.name;
             await user.save();
-            return done(null, user);
+            return done(null, user, { isNew: false });
           }
 
           const existingEmail = await User.findOne({ email });
@@ -76,7 +76,7 @@ export function configurePassport() {
             existingEmail.isEmailVerified = true;
             existingEmail.lastLogin = new Date();
             await existingEmail.save();
-            return done(null, existingEmail);
+            return done(null, existingEmail, { isNew: false });
           }
 
           user = await User.create({
@@ -87,9 +87,10 @@ export function configurePassport() {
             provider: "google",
             isEmailVerified: true,
             lastLogin: new Date(),
+            role: "user",
           });
 
-          return done(null, user);
+          return done(null, user, { isNew: true });
         } catch (err) {
           console.error("Google OAuth strategy error:", err);
           return done(err, null);
