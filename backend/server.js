@@ -70,24 +70,29 @@ const clientOrigin = productionCorsOrigins()[0] || "http://localhost:5173";
 app.use(
   cors({
     origin(origin, callback) {
-      if (!isProd) {
-        return callback(null, true);
-      }
       const allowed = productionCorsOrigins();
-      if (!origin) {
-        return callback(null, true);
-      }
+
+      // allow requests like Postman / server-to-server (no origin)
+      if (!origin) return callback(null, true);
+
+      // allow all in development
+      if (!isProd) return callback(null, true);
+
+      // allow only listed origins in production
       if (allowed.includes(origin)) {
         return callback(null, true);
       }
-      return callback(null, false);
+
+      // block others
+      console.log("❌ Blocked by CORS:", origin);
+      return callback(new Error("Not allowed by CORS"));
     },
     credentials: true,
-    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
-    exposedHeaders: ["X-New-Token"],
   })
 );
+
+// 👇 VERY IMPORTANT (preflight fix)
+app.options("*", cors());
 
 configurePassport();
 
