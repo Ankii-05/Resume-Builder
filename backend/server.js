@@ -24,10 +24,12 @@ import passport, { configurePassport } from "./config/passport.js";
 import authRoutes from "./routes/authRoutes.js";
 import resumeRoutes from "./routes/resumeRoutes.js";
 import atsRoutes from "./routes/atsRoutes.js";
+
 import {
   getGoogleCallbackUrl,
   sanitizeGoogleOAuthEnv,
 } from "./utils/googleOAuthConfig.js";
+
 import {
   googleInitHandler,
   googleOAuthCallbackAuthenticate,
@@ -45,126 +47,188 @@ const PORT = Number(process.env.PORT) || 4000;
 app.set("trust proxy", 1);
 
 const isProd = process.env.NODE_ENV === "production";
+
+/* -----------------------------------
+   Security Headers
+----------------------------------- */
 app.use(
   isProd
     ? helmet()
     : helmet({
         contentSecurityPolicy: false,
-        crossOriginOpenerPolicy: { policy: "same-origin-allow-popups" },
+        crossOriginOpenerPolicy: {
+          policy: "same-origin-allow-popups",
+        },
       })
 );
 
+/* -----------------------------------
+   CORS CONFIG
+----------------------------------- */
 function productionCorsOrigins() {
   const raw =
     process.env.CORS_ORIGINS ||
     process.env.CLIENT_URL ||
     "http://localhost:5173";
+
   return raw
     .split(",")
-    .map((s) => s.trim().replace(/\/$/, ""))
+    .map((url) => url.trim().replace(/\/$/, ""))
     .filter(Boolean);
 }
 
-const clientOrigin = productionCorsOrigins()[0] || "http://localhost:5173";
+const allowedOrigins = productionCorsOrigins();
 
-app.use(
-  cors({
-    origin(origin, callback) {
-      if (!isProd) {
-        return callback(null, true);
-      }
-      const allowed = productionCorsOrigins();
-      if (!origin) {
-        return callback(null, true);
-      }
-      if (allowed.includes(origin)) {
-        return callback(null, true);
-      }
-      return callback(null, false);
-    },
-    credentials: true,
-    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
-    exposedHeaders: ["X-New-Token"],
-  })
-);
+const corsOptions = {
+  origin(origin, callback) {
+    // local dev allow all
+    if (!isProd) {
+      return callback(null, true);
+    }
 
-// 👇 VERY IMPORTANT (preflight fix)
-app.options("*", cors());
+    // allow postman / mobile apps / no-origin requests
+    if (!origin) {
+      return callback(null, true);
+    }
 
-configurePassport();
+    const cleanOrigin = origin.replace(/\/$/, "");
 
+    if (allowedOrigins.includes(cleanOrigin)) {
+      return callback(null, true);
+    }
+
+    return callback(new Error("Not allowed by CORS"));
+  },
+
+  credentials: true,
+
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+
+  allowedHeaders: [
+    "Content-Type",
+    "Authorization",
+  ],
+
+  exposedHeaders: ["X-New-Token"],
+};
+
+app.use(cors(corsOptions));
+
+/* -----------------------------------
+   Body Parsers
+----------------------------------- */
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+/* -----------------------------------
+   Session
+----------------------------------- */
 app.use(
   session({
-    secret: process.env.SESSION_SECRET || "change-me-in-production",
+    secret:
+      process.env.SESSION_SECRET ||
+      "change-me-in-production",
+
     resave: false,
-    // Dev: must allow Passport to persist OAuth state in session on first redirect
-    saveUninitialized: !isProd,
+
+    saveUninitialized: false,
+
     name: "resumexpert.sid",
+
     cookie: {
-      secure: isProd,
+      secure: isProd, // https only in production
       httpOnly: true,
+      sameSite: isProd ? "none" : "lax",
       maxAge: 24 * 60 * 60 * 1000,
-      sameSite: "lax",
     },
   })
 );
+
+/* -----------------------------------
+   Passport
+----------------------------------- */
+configurePassport();
 
 app.use(passport.initialize());
 app.use(passport.session());
 
+/* -----------------------------------
+   Routes
+----------------------------------- */
 app.use("/api/auth", authRoutes);
-
-app.get("/google/callback", googleOAuthCallbackAuthenticate, googleOAuthCallbackIssueJwt);
-app.get("/google", googleInitHandler);
-
 app.use("/api/resume", resumeRoutes);
 app.use("/api/ats", atsRoutes);
 app.use("/api/admin", adminRoutes);
 
-// Public read; * avoids mismatch when multiple frontends (Vercel + local) load images.
+/* Google OAuth */
+app.get("/google", googleInitHandler);
+
+app.get(
+  "/google/callback",
+  googleOAuthCallbackAuthenticate,
+  googleOAuthCallbackIssueJwt
+);
+
+/* -----------------------------------
+   Static Uploads
+----------------------------------- */
 const uploadsAllowOrigin =
-  process.env.UPLOADS_CORS_ORIGIN?.replace(/\/$/, "") || "*";
+  process.env.UPLOADS_CORS_ORIGIN?.replace(/\/$/, "") ||
+  allowedOrigins[0] ||
+  "*";
 
 app.use(
   "/uploads",
   express.static(path.join(__dirname, "uploads"), {
-    setHeaders: (res, _path) => {
-      res.set("Access-Control-Allow-Origin", uploadsAllowOrigin);
+    setHeaders(res) {
+      res.set(
+        "Access-Control-Allow-Origin",
+        uploadsAllowOrigin
+      );
     },
   })
 );
 
+/* -----------------------------------
+   Health Routes
+----------------------------------- */
 app.get("/", (req, res) => {
   res.send("API WORKING");
 });
 
 app.get("/health", (req, res) => {
-  res.json({ status: "ok", timestamp: new Date().toISOString() });
+  res.json({
+    status: "ok",
+    timestamp: new Date().toISOString(),
+  });
 });
 
-await connectDB();
+/* -----------------------------------
+   DB + Server Start
+----------------------------------- */
+try {
+  await connectDB();
 
-app.listen(PORT, () => {
-  console.log(`🚀 ResumeXpert API listening on port ${PORT}`);
-  console.log(`   Try: http://127.0.0.1:${PORT}/health  (must say JSON from Node, not a PHP/HTML page)`);
-  if (!isProd && Number(PORT) === 8000) {
-    console.warn(
-      "[ResumeXpert] Port 8000 is often used by PHP (e.g. php artisan serve / XAMPP). " +
-        "If Google OAuth returns 404 with a Laravel-style page, stop PHP or set PORT=8080, " +
-        "update GOOGLE_REDIRECT_URI + Google Console redirect URI + VITE_API_URL to the same port."
+  app.listen(PORT, () => {
+    console.log(
+      `🚀 ResumeXpert API listening on port ${PORT}`
     );
-  }
-  if (process.env.GOOGLE_CLIENT_ID) {
-    try {
-      console.log(
-        `[Google OAuth] callback URL (must match Google Console): ${getGoogleCallbackUrl()}`
-      );
-    } catch {
-      /* ignore */
+
+    console.log(
+      `Health Check: /health`
+    );
+
+    if (process.env.GOOGLE_CLIENT_ID) {
+      try {
+        console.log(
+          `[Google OAuth] callback URL: ${getGoogleCallbackUrl()}`
+        );
+      } catch {
+        //
+      }
     }
-  }
-});
+  });
+} catch (error) {
+  console.error("Startup Failed:", error);
+  process.exit(1);
+}
