@@ -1,6 +1,8 @@
 import fs from 'fs';
 import path from 'path';
+import mongoose from 'mongoose';
 import Resume from '../models/Resume.js';
+import PdfDownloadLog from '../models/PdfDownloadLog.js';
 
 function jsonError(res, status, message, err) {
     const body = { message };
@@ -184,5 +186,20 @@ export const deleteResume = async (req, res) => {
         res.json({ message: 'Resume deleted successfully' });
     } catch (error) {
         jsonError(res, 500, 'Failed to delete resume', error);
+    }
+};
+
+/** Public: increment PDF download counter (fire-and-forget from client). */
+export const patchDownloadResume = async (req, res) => {
+    try {
+        const { id } = req.params;
+        if (!mongoose.isValidObjectId(id)) {
+            return res.status(400).json({ message: 'Invalid resume id' });
+        }
+        await Resume.findByIdAndUpdate(id, { $inc: { downloadCount: 1 } });
+        PdfDownloadLog.create({ resumeId: id }).catch(() => {});
+        return res.json({ success: true });
+    } catch (error) {
+        jsonError(res, 500, 'Failed to update download count', error);
     }
 };

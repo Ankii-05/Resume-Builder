@@ -7,14 +7,28 @@ export function getJwtSecret() {
   return String(raw).trim().replace(/^["']|["']$/g, "");
 }
 
-const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || "7d";
+const DEFAULT_USER_EXPIRES = process.env.JWT_EXPIRES_IN || "7d";
+const DEFAULT_ADMIN_EXPIRES = process.env.JWT_EXPIRES_IN_ADMIN || "30d";
 
-export function generateToken(userId) {
+function expiresInForRole(role) {
+  return role === "admin" ? DEFAULT_ADMIN_EXPIRES : DEFAULT_USER_EXPIRES;
+}
+
+/**
+ * @param {string} userId
+ * @param {string} [role] — "admin" | "user" (default "user")
+ */
+export function generateToken(userId, role = "user") {
   const secret = getJwtSecret();
   if (!secret) {
     throw new Error("JWT_SECRET is not configured");
   }
-  return jwt.sign({ id: userId }, secret, { expiresIn: JWT_EXPIRES_IN });
+  const normalized = role === "admin" ? "admin" : "user";
+  return jwt.sign(
+    { id: userId, role: normalized },
+    secret,
+    { expiresIn: expiresInForRole(normalized) }
+  );
 }
 
 export function verifyToken(token) {

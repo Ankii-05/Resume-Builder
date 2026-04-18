@@ -1,5 +1,5 @@
 import React from "react";
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
 import LandingPage from "./pages/LandingPage";
 import Login from "./components/Login";
@@ -10,6 +10,16 @@ import AuthCallback from "./pages/AuthCallback";
 import EditResume from "./components/EditResume";
 import ProtectedRoute from "./components/ProtectedRoute";
 import UserProvider from "./context/userContext";
+import AdminLogin from "./pages/AdminLogin";
+import AdminRoute from "./components/AdminRoute";
+import AdminLayout from "./components/AdminLayout";
+import AdminDashboard from "./pages/admin/AdminDashboard";
+import AdminUsers from "./pages/admin/AdminUsers";
+import AdminUserDetail from "./pages/admin/AdminUserDetail";
+import AdminResumes from "./pages/admin/AdminResumes";
+import AdminResumeDetail from "./pages/admin/AdminResumeDetail";
+import AdminAtsLogs from "./pages/admin/AdminAtsLogs";
+import AdminAtsDomains from "./pages/admin/AdminAtsDomains";
 
 const authShell = "min-h-screen bg-gradient-to-br from-slate-50 via-white to-violet-50 flex items-center justify-center p-4";
 
@@ -60,6 +70,20 @@ const App = () => {
               </ProtectedRoute>
             }
           />
+
+          <Route path="/admin/login" element={<AdminLogin />} />
+          <Route path="/admin" element={<AdminRoute />}>
+            <Route element={<AdminLayout />}>
+              <Route index element={<Navigate to="dashboard" replace />} />
+              <Route path="dashboard" element={<AdminDashboard />} />
+              <Route path="users" element={<AdminUsers />} />
+              <Route path="users/:id" element={<AdminUserDetail />} />
+              <Route path="resumes" element={<AdminResumes />} />
+              <Route path="resumes/:id" element={<AdminResumeDetail />} />
+              <Route path="ats-domains" element={<AdminAtsDomains />} />
+              <Route path="ats-logs" element={<AdminAtsLogs />} />
+            </Route>
+          </Route>
         </Routes>
       </div>
       <Toaster

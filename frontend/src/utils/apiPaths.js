@@ -1,6 +1,9 @@
+/** Production API (Render). Override with VITE_API_URL in .env / Vercel env for previews. */
+const PRODUCTION_API = "https://resume-builder-backend-s3g5.onrender.com";
+
 export const BASE_URL =
   import.meta.env.VITE_API_URL ||
-  "https://resume-builder-backend-5ye0.onrender.com/";
+  (import.meta.env.PROD ? PRODUCTION_API : "http://127.0.0.1:8080/");
 
 //utils/apiPath.js
 export const API_PATHS = {
@@ -23,7 +26,24 @@ export const API_PATHS = {
     },
     ATS: {
         CHECK: "/api/ats/check",
+        DOMAINS: "/api/ats/domains",
     },
+    ADMIN: {
+        STATS: "/api/admin/stats",
+        STATS_MONTHLY: "/api/admin/stats/monthly",
+        STATS_RECENT_ATS: "/api/admin/stats/recent-ats",
+        STATS_RECENT_RESUMES: "/api/admin/stats/recent-resumes",
+        STATS_DOMAIN_USAGE: "/api/admin/stats/domain-usage",
+        USERS: "/api/admin/users",
+        USER_CREATE: "/api/admin/users/create",
+        USER: (id) => `/api/admin/users/${id}`,
+        RESUMES: "/api/admin/resumes",
+        RESUME: (id) => `/api/admin/resumes/${id}`,
+        ATS_LOGS: "/api/admin/ats-logs",
+        ATS_DOMAINS: "/api/admin/ats-domains",
+        ATS_DOMAIN: (id) => `/api/admin/ats-domains/${id}`,
+    },
+    RESUME_DOWNLOAD: (id) => `/api/resume/${id}/download`,
     image: {
         UPLOAD_IMAGE: "api/auth/upload-image",
     },

@@ -14,12 +14,12 @@ if (
 import express from "express";
 import cors from "cors";
 import helmet from "helmet";
-import rateLimit from "express-rate-limit";
 import path from "path";
 import session from "express-session";
 import { fileURLToPath } from "url";
 
 import { connectDB } from "./config/db.js";
+import adminRoutes from "./routes/admin.js";
 import passport, { configurePassport } from "./config/passport.js";
 import authRoutes from "./routes/authRoutes.js";
 import resumeRoutes from "./routes/resumeRoutes.js";
@@ -54,32 +54,43 @@ app.use(
       })
 );
 
-const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 60,
-  standardHeaders: true,
-  legacyHeaders: false,
-});
-app.use("/api/auth", authLimiter);
-// Root paths — must exist for GOOGLE_REDIRECT_URI like http://127.0.0.1:8000/google/callback
-app.use("/google", authLimiter);
+function productionCorsOrigins() {
+  const raw =
+    process.env.CORS_ORIGINS ||
+    process.env.CLIENT_URL ||
+    "http://localhost:5173";
+  return raw
+    .split(",")
+    .map((s) => s.trim().replace(/\/$/, ""))
+    .filter(Boolean);
+}
 
-const clientOrigin = (process.env.CLIENT_URL || "http://localhost:5173").replace(
-  /\/$/,
-  ""
-);
+const clientOrigin = productionCorsOrigins()[0] || "http://localhost:5173";
 
 app.use(
   cors({
-    origin:
-      process.env.NODE_ENV === "production"
-        ? clientOrigin
-        : true,
+    origin(origin, callback) {
+      if (!isProd) {
+        return callback(null, true);
+      }
+      const allowed = productionCorsOrigins();
+      if (!origin) {
+        return callback(null, true);
+      }
+      if (allowed.includes(origin)) {
+        return callback(null, true);
+      }
+      return callback(null, false);
+    },
     credentials: true,
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
+    exposedHeaders: ["X-New-Token"],
   })
 );
+
+// 👇 VERY IMPORTANT (preflight fix)
+app.options("*", cors());
 
 configurePassport();
 
@@ -112,9 +123,11 @@ app.get("/google", googleInitHandler);
 
 app.use("/api/resume", resumeRoutes);
 app.use("/api/ats", atsRoutes);
+app.use("/api/admin", adminRoutes);
 
+// Public read; * avoids mismatch when multiple frontends (Vercel + local) load images.
 const uploadsAllowOrigin =
-  process.env.UPLOADS_CORS_ORIGIN?.replace(/\/$/, "") || clientOrigin;
+  process.env.UPLOADS_CORS_ORIGIN?.replace(/\/$/, "") || "*";
 
 app.use(
   "/uploads",

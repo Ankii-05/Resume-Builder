@@ -2,6 +2,10 @@ import User from "../models/User.js";
 import bcrypt from "bcryptjs";
 import { generateToken } from "../utils/jwt.js";
 import { normalizeEmail } from "../utils/authHelpers.js";
+import {
+  sendWelcomeEmail,
+  sendAdminNewUserNotification,
+} from "../utils/mailer.js";
 
 export const registerUser = async (req, res) => {
   try {
@@ -36,11 +40,23 @@ export const registerUser = async (req, res) => {
       isEmailVerified: false,
     });
 
+    try {
+      sendWelcomeEmail(user.email, user.name);
+      sendAdminNewUserNotification(
+        user.email,
+        user.name,
+        "Self-registration"
+      );
+    } catch (emailErr) {
+      console.error("[register emails]", emailErr);
+    }
+
     res.status(201).json({
       _id: user._id,
       name: user.name,
       email: user.email,
-      token: generateToken(user._id),
+      role: user.role ?? "user",
+      token: generateToken(user._id, user.role ?? "user"),
     });
   } catch (error) {
     const body = { message: "Server error" };
@@ -82,11 +98,15 @@ export const loginUser = async (req, res) => {
     user.lastLogin = new Date();
     await user.save();
 
+    const fresh = await User.findById(user._id).select("name email role");
+    const role = fresh?.role === "admin" ? "admin" : "user";
+
     res.json({
-      _id: user._id,
-      name: user.name,
-      email: user.email,
-      token: generateToken(user._id),
+      _id: fresh._id,
+      name: fresh.name,
+      email: fresh.email,
+      role,
+      token: generateToken(fresh._id, role),
     });
   } catch (error) {
     const body = { message: "Server error" };
@@ -103,7 +123,9 @@ export const getUserProfile = async (req, res) => {
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
-    res.json(user);
+    const o = user.toObject();
+    o.role = o.role ?? "user";
+    res.json(o);
   } catch (error) {
     const body = { message: "Server error" };
     if (process.env.NODE_ENV !== "production" && error?.message) {
@@ -127,6 +149,7 @@ export const verifyAuth = async (req, res) => {
         email: user.email,
         avatar: user.avatar,
         provider: user.provider,
+        role: user.role ?? "user",
       },
     });
   } catch (error) {
