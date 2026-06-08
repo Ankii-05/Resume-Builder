@@ -73,27 +73,19 @@ function productionCorsOrigins() {
 
   return raw
     .split(",")
-    .map((url) => url.trim().replace(/\/$/, ""))
+    .map((s) => s.trim().replace(/\/$/, ""))
     .filter(Boolean);
 }
 
 const allowedOrigins = productionCorsOrigins();
 
 const corsOptions = {
-  origin(origin, callback) {
-    // local dev allow all
-    if (!isProd) {
-      return callback(null, true);
-    }
-
-    // allow postman / mobile apps / no-origin requests
-    if (!origin) {
-      return callback(null, true);
-    }
+  origin: function (origin, callback) {
+    if (!origin) return callback(null, true);
 
     const cleanOrigin = origin.replace(/\/$/, "");
 
-    if (allowedOrigins.includes(cleanOrigin)) {
+    if (!isProd || allowedOrigins.includes(cleanOrigin)) {
       return callback(null, true);
     }
 
@@ -101,18 +93,12 @@ const corsOptions = {
   },
 
   credentials: true,
-
   methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-
-  allowedHeaders: [
-    "Content-Type",
-    "Authorization",
-  ],
-
-  exposedHeaders: ["X-New-Token"],
+  allowedHeaders: ["Content-Type", "Authorization"],
 };
 
 app.use(cors(corsOptions));
+app.options("*", cors(corsOptions));
 
 /* -----------------------------------
    Body Parsers
@@ -232,3 +218,6 @@ try {
   console.error("Startup Failed:", error);
   process.exit(1);
 }
+
+console.log("PORT:", process.env.PORT);
+console.log("MONGO:", process.env.MONGODB_URI);
