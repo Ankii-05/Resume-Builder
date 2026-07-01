@@ -69,10 +69,7 @@ app.use(
    CORS CONFIG
 ----------------------------------- */
 function productionCorsOrigins() {
-  const raw =
-    process.env.CORS_ORIGINS ||
-    process.env.CLIENT_URL ||
-    "http://localhost:5173";
+  const raw = process.env.CORS_ORIGINS || process.env.CLIENT_URL || "http://localhost:5173"|| "https://resume-builder1-5l8p.onrender.com";
 
   return raw
     .split(",")
