@@ -25,6 +25,9 @@ import authRoutes from "./routes/authRoutes.js";
 import resumeRoutes from "./routes/resumeRoutes.js";
 import atsRoutes from "./routes/atsRoutes.js";
 
+import dns from "node:dns/promises";
+dns.setServers(["1.1.1.1"]);
+
 import {
   getGoogleCallbackUrl,
   sanitizeGoogleOAuthEnv,
@@ -97,8 +100,11 @@ const corsOptions = {
   allowedHeaders: ["Content-Type", "Authorization"],
 };
 
+// app.use(cors(corsOptions));
+// app.options("*", cors(corsOptions));
+
 app.use(cors(corsOptions));
-app.options("*", cors(corsOptions));
+app.options(/.*/, cors(corsOptions));
 
 /* -----------------------------------
    Body Parsers
